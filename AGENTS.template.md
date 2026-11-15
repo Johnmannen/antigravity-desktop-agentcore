@@ -56,4 +56,12 @@ Before finishing any build or task:
    * *Step 1 (Silent X-ray):* `chrome-devtools` or `browser` subagent verifies 0 console/network errors, interactivity, and desktop + mobile layouts.
    * *Step 2 (Visible live demo):* `chrome_agent.py demo <url> --keep-open --screenshot` demonstrates features visibly on screen, followed by reading the screenshot with `read_file`.
 2. **Requirements check:** Verify point-by-point against the user's request.
-3. **Rules & artifacts check:** Confirm compliance with `AGENTS.md` and run `qa-auditor` for major builds.
+3. **Rules & artifacts check:** Confirm compliance with `AGENTS.md` and run `qa-auditor` for major builds. For video/animation/demo builds, **Audio-Visual Speaker-Sync is mandatory:** narration must always match the visuals (graphics must follow the speaker and shift with every new thought—never remain static while speech continues). Any desync must be flagged as `ERROR` by `qa-auditor` (only exception: videos explicitly demonstrating how an error occurs).
+
+---
+
+## Anti-Hang & Anti-Deadlock Standard (Mandatory)
+
+* **No Windows pipe deadlocks:** Never pass `stderr=subprocess.PIPE` or `stdout=subprocess.PIPE` while feeding `stdin` (e.g., piping frames to `ffmpeg`). Always redirect `stderr` to a log file.
+* **Unbuffered progress & hard timeouts:** Run long Python jobs with `-u` (`flush=True`), enforce explicit timeouts (`asyncio.wait_for`, `timeout=`) and retries on network/TTS/API/Playwright calls, and use `tools/safe_exec.py` to terminate stalled process trees cleanly.
+* **No premature completion:** Never report a deliverable as done until the output file exists on disk and is verified.

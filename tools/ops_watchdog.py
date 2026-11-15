@@ -201,6 +201,26 @@ def run_scan(*, update_baseline: bool = False, notify: bool = False) -> dict:
             "entries": new_auto,
         })
 
+    # Detect potentially stalled/zombie heavy tools (ffmpeg/playwright/python > 30 min uptime)
+    stalled_procs: list[str] = []
+    now_ts = datetime.now(timezone.utc).timestamp()
+    for proc in psutil.process_iter(["pid", "name", "create_time", "cmdline"]):
+        try:
+            pname = (proc.info["name"] or "").lower()
+            if pname not in ("ffmpeg.exe", "ffprobe.exe"):
+                continue
+            age_min = (now_ts - float(proc.info["create_time"] or now_ts)) / 60.0
+            if age_min >= 20.0:
+                stalled_procs.append(f"{pname} (PID {proc.info['pid']}, {age_min:.0f}m)")
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    if stalled_procs:
+        alerts.append({
+            "type": "ops_stalled_media_proc",
+            "message": f"Långkörande/eventuellt hängd mediaprocess: {', '.join(stalled_procs[:3])}.",
+            "processes": stalled_procs,
+        })
+
     summary = {
         "ram_used_pct": vm.percent,
         "ram_avail_gb": round(vm.available / (1024**3), 2),
