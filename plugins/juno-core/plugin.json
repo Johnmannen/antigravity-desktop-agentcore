@@ -1,0 +1,17 @@
+{
+  "name": "juno-core",
+  "displayName": "Juno Core Ecosystem",
+  "version": "1.0.0",
+  "description": "Johns globala Juno-kärna: neurodivergent ergonomi, 3-lagers minne, autonom drift-/repovakt och lokala specialister.",
+  "author": {
+    "name": "John Garp"
+  },
+  "keywords": [
+    "juno",
+    "executive-function",
+    "memory",
+    "automation",
+    "windows",
+    "guardian"
+  ]
+}

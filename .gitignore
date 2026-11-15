@@ -1,0 +1,19 @@
+# Python & virtual environments
+.venv/
+__pycache__/
+*.py[cod]
+
+# Secrets & local environment
+.env
+.env.local
+*.key
+*.pem
+
+# Logs & runtime state
+logs/
+memory/pending/
+.chrome-agent-profile/
+
+# Large local LLM binaries (>100 MB) & legacy archive
+local_llm/
+archive/

@@ -1,0 +1,16 @@
+{
+  "juno-post-edit-verify": {
+    "PostToolUse": [
+      {
+        "matcher": "write_file|edit_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "<PROJECT_ROOT>\\.venv\\Scripts\\python.exe <USER_HOME>\\.gemini\\config\\plugins\\juno-core\\scripts\\post_edit_verify.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
