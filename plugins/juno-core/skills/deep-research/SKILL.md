@@ -1,6 +1,6 @@
 ---
 name: deep-research
-description: Iterative Deep Research workflow with an adaptive one-question-at-a-time prompt writer before running tools/deep_research.py.
+description: Iterative Deep Research workflow with an adaptive one-question-at-a-time prompt writer before running <PROJECT_ROOT>\tools\deep_research.py.
 ---
 
 # Deep Research Skill (Adaptiv Promptskrivare + Iterativ Sökning)
@@ -16,7 +16,7 @@ Använd detta arbetsflöde när John vill göra en grundlig research på ett äm
 ## Steg 2: Kör Deep Research-motorn
 När John godkänt prompten, kör:
 ```powershell
-.\.venv\Scripts\python.exe tools/deep_research.py "<färdig_prompt>"
+<PROJECT_ROOT>\.venv\Scripts\python.exe <PROJECT_ROOT>\tools\deep_research.py "<färdig_prompt>"
 ```
 
 ## Steg 3: Leverera

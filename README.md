@@ -71,6 +71,7 @@ Then open `.env` and add any API keys you use (for example OpenAI/Gemini/OpenRou
 | **`tools/chrome_agent.py`** | Visible Google Chrome automation (`open`, `search`, `demo`) with `--keep-open`, maximized viewport, cursor overlay, and screenshots. |
 | **`tools/desktop_bridge.py`** & **`desktop_operator.py`** | Interactive Windows desktop bridge and `pywinauto` window inspection/control. |
 | **`tools/system_health.py`**, **`ops_watchdog.py`**, **`repo_janitor.py`** | Local RAM/disk monitoring, service checks, and git cleanliness scanner. |
+| **`tools/init_project.py`** | Installs stack-specific local `AGENTS.md` + `.gitignore` complements into new projects while keeping central tools in one place. |
 | **`tools/deep_research.py`**, **`disk_librarian.py`**, **`inbox_organizer.py`** | Local research, SHA-256 duplicate detection, and read-only folder analysis. |
 | **`plugins/juno-core/`** | Portable Antigravity plugin containing specialist subagents (`juno-builder`, `qa-auditor`, `system-guardian`) and `post-verify` skills. |
 | **`services/juno_rostproxy.py`** | Optional local OpenAI-compatible STT/TTS proxy service. |

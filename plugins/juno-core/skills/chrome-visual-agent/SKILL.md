@@ -10,9 +10,9 @@ Använd detta verktyg när John vill att agenten ska söka, navigera eller samla
 ## Kommandon (körs från `<PROJECT_ROOT>`)
 
 - **Öppna och läs en sida visuellt (stannar öppen):**
-  `.\.venv\Scripts\python.exe tools/chrome_agent.py open "https://example.com" --keep-open --screenshot`
+  `<PROJECT_ROOT>\.venv\Scripts\python.exe <PROJECT_ROOT>\tools\chrome_agent.py open "https://example.com" --keep-open --screenshot`
 - **Sök visuellt med smart tvåspråkig `OR`-expansion (stannar öppen):**
-  `.\.venv\Scripts\python.exe tools/chrome_agent.py search "begagnade elskotrar i Haninge" --smart --keep-open`
+  `<PROJECT_ROOT>\.venv\Scripts\python.exe <PROJECT_ROOT>\tools\chrome_agent.py search "begagnade elskotrar i Haninge" --smart --keep-open`
 
 ## Säkerhetsregler
 - Kringgå **aldrig** CAPTCHA, inloggningsspärrar eller betalväggar. Stanna och be John ta över i fönstret om en sådan dyker upp.
