@@ -97,6 +97,70 @@ def cmd_learn(args: argparse.Namespace) -> None:
     print(json.dumps({"status": action, "entry": entry, "memories_count": len(cleaned), "size": size}, ensure_ascii=False, indent=2))
 
 
+def _save_profile_atomic(profile_path: Path, profile: dict) -> None:
+    """Write profile.json atomically via a temporary file."""
+    tmp_path = profile_path.with_suffix(".json.tmp")
+    tmp_path.write_text(json.dumps(profile, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    tmp_path.replace(profile_path)
+
+
+def cmd_forget(args: argparse.Namespace) -> None:
+    """Remove a memory by id from profile.json memories."""
+    profile_path = MEMORY_DIR / "profile.json"
+    profile = json.loads(profile_path.read_text(encoding="utf-8"))
+    mems = profile.get("memories", [])
+    remaining = [m for m in mems if m.get("id") != args.memory_id]
+
+    if len(remaining) == len(mems):
+        write_gate._audit("forget_not_found", user="juno", target="profile.json", ok=False, note=args.memory_id)
+        print(json.dumps({"error": f"Minne med id '{args.memory_id}' hittades inte.", "code": "NOT_FOUND"}, ensure_ascii=False, indent=2))
+        sys.exit(1)
+
+    profile["memories"] = remaining
+    _save_profile_atomic(profile_path, profile)
+    write_gate._audit("forget", user="juno", target="profile.json", ok=True, note=f"deleted:{args.memory_id}")
+    print(json.dumps({"status": "deleted", "id": args.memory_id}, ensure_ascii=False, indent=2))
+
+
+def cmd_update(args: argparse.Namespace) -> None:
+    """Update text, accessed timestamp, and importance for an existing memory by id."""
+    new_text = " ".join(args.new_text.split()).strip()
+    if not new_text:
+        print(json.dumps({"error": "Ny text får inte vara tom.", "code": "VALIDATION_FAILED"}, ensure_ascii=False, indent=2))
+        sys.exit(1)
+
+    hits = write_gate.secret_scan(new_text)
+    if hits:
+        write_gate._audit("update_blocked_secret", user="juno", target="profile.json", ok=False, note=";".join(hits[:3]))
+        print(json.dumps({"error": f"Blockerad av sekretfilter ({hits[0]})", "code": "SECRET_FILTERED"}, ensure_ascii=False, indent=2))
+        sys.exit(1)
+
+    profile_path = MEMORY_DIR / "profile.json"
+    profile = json.loads(profile_path.read_text(encoding="utf-8"))
+    mems = profile.get("memories", [])
+    target_entry = next((m for m in mems if m.get("id") == args.memory_id), None)
+
+    if target_entry is None:
+        write_gate._audit("update_not_found", user="juno", target="profile.json", ok=False, note=args.memory_id)
+        print(json.dumps({"error": f"Minne med id '{args.memory_id}' hittades inte.", "code": "NOT_FOUND"}, ensure_ascii=False, indent=2))
+        sys.exit(1)
+
+    target_entry["text"] = new_text
+    target_entry["accessed"] = lifecycle._now()
+    target_entry["importance"] = lifecycle.score_importance(new_text)
+
+    size = len(json.dumps(profile, ensure_ascii=False))
+    limit = write_gate.FILE_LIMITS.get("profile.json", 8192)
+    if size > limit:
+        write_gate._audit("update_blocked_full", user="juno", target="profile.json", ok=False, note=f"{size}>{limit}")
+        print(json.dumps({"error": f"FILE_FULL: profile.json skulle bli {size} tecken (tak {limit}). Konsolidera först.", "code": "FILE_FULL"}, ensure_ascii=False, indent=2))
+        sys.exit(1)
+
+    _save_profile_atomic(profile_path, profile)
+    write_gate._audit("update_memory", user="juno", target="profile.json", ok=True, note=f"updated:{args.memory_id}")
+    print(json.dumps({"status": "updated", "id": args.memory_id, "text": new_text}, ensure_ascii=False, indent=2))
+
+
 def cmd_memories(_args: argparse.Namespace) -> None:
     """List all learned memories stored in profile.json."""
     print(json.dumps(lifecycle.get_memories(), ensure_ascii=False, indent=2))
@@ -155,6 +219,13 @@ def main() -> None:
     p_learn.add_argument("--source", default="auto_learn")
     p_learn.add_argument("--importance", type=int, default=None)
 
+    p_forget = sub.add_parser("forget", help="Remove a learned memory by id from profile.json")
+    p_forget.add_argument("memory_id", help="ID of the memory to remove")
+
+    p_update = sub.add_parser("update", help="Update the text of an existing memory by id")
+    p_update.add_argument("memory_id", help="ID of the memory to update")
+    p_update.add_argument("new_text", help="Updated memory text")
+
     sub.add_parser("memories", help="List learned memories in profile.json")
     sub.add_parser("maintain", help="Run non-destructive memory lifecycle maintenance")
 
@@ -167,6 +238,8 @@ def main() -> None:
         "reject": cmd_reject,
         "energy": cmd_energy,
         "learn": cmd_learn,
+        "forget": cmd_forget,
+        "update": cmd_update,
         "memories": cmd_memories,
         "maintain": cmd_maintain,
     }[args.cmd](args)

@@ -17,6 +17,9 @@
 ### Memory Discipline
 * Save durable user facts/preferences via:
   `python tools/memory_cli.py learn "<short fact>" --stability stable|fluid|transient --source auto_learn`
+  Whenever a new memory is saved, always report it concisely in chat:
+  `**Saved to memory (<id> | <stability>):** "<exact text>"`
+* Update or remove a stored memory anytime via `python tools/memory_cli.py update <id> "<new text>"` or `forget <id>`.
 * Store repeatable procedures as **Skills** in `skills/`, never inside personal memory.
 * Heavy changes (`projects.json`, core rules) are staged via `python tools/memory_cli.py stage ...` and applied only after user approval (`approve`).
 

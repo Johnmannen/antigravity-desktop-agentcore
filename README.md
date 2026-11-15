@@ -78,7 +78,7 @@ Supported `--stack` values: `python`, `web`, `mobile`, `general`.
 | Component | Purpose |
 | :--- | :--- |
 | **`plugins/juno-core/`** | Global Antigravity plugin: slimmed global rules, specialist subagents (`juno-builder`, `qa-auditor`, `system-guardian`), hooks, and `post-verify` skills. |
-| **`memory/`** | 3-layer memory engine (`write_gate.py`, `lifecycle.py`) with secret filtering, prompt-injection guards, stability tiers, and deduplication. |
+| **`memory/`** | 3-layer memory engine (`write_gate.py`, `lifecycle.py`) with secret filtering, prompt-injection guards, stability tiers, deduplication, transparent chat receipts, and `update`/`forget` controls. |
 | **`tools/init_project.py`** | Installs lightweight, stack-specific local `AGENTS.md` and `.gitignore` complements into any project without duplicating central tools. |
 | **`tools/chrome_agent.py`** | Visible Google Chrome automation (`open`, `search`, `demo`) with `--keep-open`, maximized viewport, cursor overlay, and screenshots. |
 | **`tools/desktop_bridge.py`** & **`desktop_operator.py`** | Interactive Windows desktop bridge and `pywinauto` window inspection/control. |
