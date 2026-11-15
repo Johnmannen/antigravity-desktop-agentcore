@@ -45,7 +45,7 @@
 1. **Phase-based inventory before starting:** Scan available skills, tools, and subagents across *Planning & Design*, *UI/Production & Code Quality*, *Technical Testing & Accessibility*, and *Visual Live Demo & Post-Verify*. Read matching `SKILL.md` files before coding.
 2. **New project / missing local `AGENTS.md`:** Initialize the project's stack-specific local complement (`python`, `web`, `mobile`, or `general`) without duplicating central tools by running:
    `python tools/init_project.py "<project_dir>" --stack <python|web|mobile|general>`
-3. **Report at the top of each reply:** State which agents, skills, and tools were used (broken down per phase for larger builds).
+3. **Report at the top of each reply:** Start with a compact header block listing agents, skills, and tools used (plus `**Saved to memory (...):**` whenever a memory is saved), followed by a horizontal divider (`---`) before the main reply. Break down per phase for larger builds.
 
 ---
 
