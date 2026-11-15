@@ -66,7 +66,7 @@ def _stack_section(stack: str, juno_root: Path) -> str:
 - **Tillgänglighet & Prestanda:** Använd `a11y-debugging` och `chrome-devtools` för att kontrollera ARIA, kontraster, tangentbordsnavigering, konsolfel och nätverksanrop.
 - **Tvåstegs `post-verify` (obligatorisk före överlämning):**
   1. *Tyst teknisk röntgen:* Testa desktop- och mobil-viewport via `chrome-devtools` (konsol, nätverk, overflow/layout).
-  2. *Synlig live-demo:* Kör `python "{chrome_agent}" --url <app-url> --keep-open` för att demonstrera flödet live på skärmen och verifiera skärmdumpen med `read_file`."""
+  2. *Synlig live-demo:* Kör `python "{chrome_agent}" demo "<app-url>" --keep-open --screenshot` för att demonstrera flödet live på skärmen och verifiera skärmdumpen med `read_file`."""
 
     if stack == "mobile":
         return """## Stack: Mobil (Flutter / PWA)
