@@ -1,44 +1,48 @@
 # Antigravity Desktop AgentCore
 
-A **global, personalized agent orchestration framework** for **Google Antigravity Desktop (`v2.32.1+`)** and **Remote Control (`antigravity.google.com`)**.
+A **global, personalized agent orchestration framework** for the **[Antigravity App](https://antigravity.google/download) (`v2.32.1+`)** and **Remote Control (`antigravity.google.com`)**.
 
-Instead of setting up rules, memory, and verification workflows separately for every repository, **AgentCore** separates your environment into three clean layers so your personalized AI setup works **globally across every project on your desktop**:
+Instead of configuring rules, memory, and verification separately for every project, **AgentCore** splits your setup into three clean layers so your personalized AI workflow works **globally across every repository on your desktop**:
 
-1. **Global Persona & Safety Layer (`plugins/juno-core/`):** Installed once in your global Antigravity config (`~/.gemini/config/`). Travels with you to every workspace — providing consistent communication ergonomics, approval gates, phase-based skill selection, and mandatory post-verification while keeping **Antigravity's built-in tools (`browser`, `research`, `swarm`, `run_workflow`, MCP servers) first-class**.
-2. **Central Python Engine (one shared home directory):** Hosts your 3-layer memory (`memory/`), visible Chrome live-demo runner (`tools/chrome_agent.py`), Windows desktop bridge (`tools/desktop_bridge.py`), and system health monitors (`tools/system_health.py`) — invoked via absolute paths from any project.
+1. **Global Persona & Safety Layer (`plugins/juno-core/`):** Installed once in `%USERPROFILE%\.gemini\config\plugins\juno-core`. Follows you into every workspace with consistent communication ergonomics, approval gates, phase-based skill selection, and mandatory post-verification — while keeping **Antigravity's built-in tools (`browser`, `research`, `swarm`, `run_workflow`, MCP servers) first-class**.
+2. **Central Python Engine (one shared home directory):** Hosts your 3-layer memory (`memory/`), visible Chrome live-demo runner (`tools/chrome_agent.py`), Windows desktop bridge (`tools/desktop_bridge.py`), and health monitors (`tools/system_health.py`), invoked via absolute paths from any project.
 3. **Stack-Specific Local Complements (`tools/init_project.py`):** Automatically installs lightweight, project-specific `AGENTS.md` + `.gitignore` rulesets (`python`, `web`, `mobile`, `general`) into new projects without bloating your global context or duplicating scripts.
 
 ---
 
 ## 1. Prerequisites (Installed Separately)
 
-Before cloning this repository, ensure the following applications and runtimes are available (Windows 10/11 recommended):
+Before cloning this repository, ensure the following applications and runtimes are installed:
 
-1. **Google Antigravity Desktop (`v2.32.1+`)**
-   * Connected to **`antigravity.google.com`** with **Remote Control** enabled so desktop and mobile sessions share the same local workspace and global plugin.
+1. **[Antigravity App](https://antigravity.google/download) (`v2.32.1+`)**
+   * Download from `https://antigravity.google/download` (official docs: `https://antigravity.google/docs`).
+   * Enable **Remote Control** so web/mobile sessions on `antigravity.google.com` connect seamlessly to your local workspace.
 2. **Google Chrome**
    * Required for `tools/chrome_agent.py` (`channel="chrome"`, visible live demos) and Chrome DevTools MCP debugging.
-3. **Python `3.10+`**
+3. **Python `3.10+`** *(Windows 10/11 required for `pywinauto` / `desktop_bridge.py`; core CLI tools are cross-platform Python)*
    * Powers the central engine, 3-layer memory, desktop bridge, and optional voice proxy.
 4. **Node.js (`18+` with `npx`)**
    * Required for MCP servers and guidance tools such as `chrome-devtools-mcp` and `modern-web-guidance`.
-5. **Git & GitHub CLI (`gh`)** *(optional, for repo sync)*
-   * Needed if you use `tools/sync_repos.py` to manage private + public template sync.
+5. **Git & GitHub CLI (`gh`)** *(optional, for dual-repo sync)*
+   * Needed if you use `tools/sync_repos.py` to sync private + public template repositories.
+
+### How Antigravity Connects to This Python Engine
+Today, the Antigravity App orchestrates these local Python tools natively through **Skills (`SKILL.md`)**, **Hooks (`hooks.json`)**, **MCP (`chrome-devtools-mcp`)**, and **CLI commands (`run_command`)** — no extra Antigravity SDK dependency is required to run AgentCore.
+
+* **Optional / Next-Step Integration — [Google Antigravity SDK (`antigravity-sdk-python`)](https://github.com/google-antigravity/antigravity-sdk-python):** If you want to build standalone Python services or custom apps that programmatically lease and orchestrate Antigravity agents directly from Python code, you can pair this repository with the `google-antigravity` Python package.
 
 ---
 
 ## 2. Recommended Antigravity Settings
 
-* **Remote Control:** Enable Remote Control in Antigravity Desktop so `antigravity.google.com` connects to your local machine.
+* **Remote Control:** Turn on Remote Control in the Antigravity App so `antigravity.google.com` can drive your local workspace.
 * **MCP Servers:** Enable **`chrome-devtools`** (`npx chrome-devtools-mcp@latest`) for silent DOM, console, network, and accessibility inspection.
-* **Global Plugin:** Load `plugins/juno-core/` in your global Antigravity config (`~/.gemini/config/plugins/`) so your personalized rules, specialist subagents (`juno-builder`, `qa-auditor`, `system-guardian`, `chrome-visual-agent`), and `post-verify` workflow apply across all projects.
-* **Workspace Rules:** Customize `AGENTS.template.md` as `AGENTS.md` (created automatically by `setup.ps1`).
+* **Global Plugin Path:** Copy or link `plugins/juno-core/` into `%USERPROFILE%\.gemini\config\plugins\juno-core` so global rules, subagents (`juno-builder`, `qa-auditor`, `system-guardian`, `chrome-visual-agent`), hooks, and `post-verify` load in every project.
+* **Workspace Rules:** Customize `AGENTS.template.md` as `AGENTS.md` (initialized automatically by `setup.ps1`).
 
 ---
 
 ## 3. Quick Start (Installed via This Repo)
-
-Everything in `tools/`, `memory/`, `plugins/juno-core/`, and `services/` is included in this repository.
 
 ```powershell
 git clone https://github.com/Johnmannen/antigravity-desktop-agentcore.git
@@ -46,7 +50,7 @@ cd antigravity-desktop-agentcore
 .\setup.ps1
 ```
 
-Optional: add `-WithVoice` to include the local voice proxy dependencies (`fastapi`, `uvicorn`, `edge-tts`, `faster-whisper`, `kokoro`):
+Optional: pass `-WithVoice` to install local voice proxy dependencies (`fastapi`, `uvicorn`, `edge-tts`, `faster-whisper`, `kokoro`):
 
 ```powershell
 .\setup.ps1 -WithVoice
@@ -63,8 +67,6 @@ Then open `.env` and add your own API keys.
 
 ### Initialize Any New Project Globally
 
-Once AgentCore is set up, initialize any new or existing project folder with stack-appropriate local rules while keeping all Python tools and memory centralized:
-
 ```powershell
 .\.venv\Scripts\python.exe tools\init_project.py "C:\path\to\my-new-project" --stack web
 ```
@@ -73,28 +75,27 @@ Supported `--stack` values: `python`, `web`, `mobile`, `general`.
 
 ---
 
-## 4. Architecture Overview
+## 4. Complete Feature Catalog
 
-| Component | Purpose |
-| :--- | :--- |
-| **`plugins/juno-core/`** | Global Antigravity plugin: slimmed global rules, specialist subagents (`juno-builder`, `qa-auditor`, `system-guardian`), hooks, and `post-verify` skills. |
-| **`memory/`** | 3-layer memory engine (`write_gate.py`, `lifecycle.py`) with secret filtering, prompt-injection guards, stability tiers, deduplication, transparent chat receipts, and `update`/`forget` controls. |
-| **`tools/init_project.py`** | Installs lightweight, stack-specific local `AGENTS.md` and `.gitignore` complements into any project without duplicating central tools. |
-| **`tools/chrome_agent.py`** | Visible Google Chrome automation (`open`, `search`, `demo`) with `--keep-open`, maximized viewport, cursor overlay, and screenshots. |
-| **`tools/desktop_bridge.py`** & **`desktop_operator.py`** | Interactive Windows desktop bridge and `pywinauto` window inspection/control. |
-| **`tools/system_health.py`**, **`ops_watchdog.py`**, **`repo_janitor.py`** | Local RAM/disk monitoring, service checks, and git cleanliness scanner. |
-| **`tools/deep_research.py`**, **`disk_librarian.py`**, **`inbox_organizer.py`** | Local research, SHA-256 duplicate detection, and read-only folder analysis. |
-| **`tools/export_public_template.py`** & **`sync_repos.py`** | Whitelisted public template exporter with PII/secret scanning and dual-repo GitHub sync. |
-| **`services/juno_rostproxy.py`** | Optional local OpenAI-compatible STT/TTS proxy service. |
+| Feature | What It Does & How It Works | Included in Repo |
+| :--- | :--- | :--- |
+| **Global Plugin (`plugins/juno-core/`)** | Bundles global persona/ergonomics rules, `post_edit_verify.py` hook, `post-verify` skill, and 8 specialist subagents (`juno-builder`, `qa-auditor`, `system-guardian`, `chrome-visual-agent`, `deep-research`, `desktop-operator`, `disk-librarian`, `google-assistant`). | Yes |
+| **3-Layer Memory Engine (`memory/` + `tools/memory_cli.py`)** | Stores preferences and learned facts in JSON with `write_gate.py` (secret filtering + prompt-injection guard), `lifecycle.py` (importance scoring + deduplication), `stage`/`approve` gating, and `learn`/`update`/`forget` with concise chat receipts. | Yes |
+| **Project Initializer (`tools/init_project.py`)** | Generates stack-specific local `AGENTS.md` (`python`, `web`, `mobile`, `general`) and `.gitignore` complements for new projects while keeping all Python tools centralized. | Yes |
+| **Visible Chrome Live-Demo (`tools/chrome_agent.py`)** | Launches visible Google Chrome (`headless=False`, `--start-maximized`, cyan cursor overlay) for `open`, `search`, and `demo` (clicks live UI flows, captures screenshots, and leaves Chrome open with `--keep-open`). | Yes |
+| **Windows Desktop Bridge (`tools/desktop_bridge.py`, `desktop_operator.py`)** | Local HTTP desktop bridge (`127.0.0.1:18765`) + `pywinauto` automation to inspect open Windows apps, focus windows, launch apps, and route visible Chrome windows to your active desktop session. | Yes (Windows 10/11) |
+| **Two-Step Visual `post-verify`** | Mandatory 3-part quality gate: (1) silent `browser`/`chrome-devtools` X-ray on desktop + mobile, (2) visible `chrome_agent.py demo` + screenshot review via `read_file`, (3) independent `qa-auditor` sign-off. | Yes |
+| **System Health & Watchdogs (`system_health.py`, `ops_watchdog.py`, `repo_janitor.py`, `guardian_watch.py`)** | Monitors Windows RAM, disk space, running services/ports, and git working-tree cleanliness; writes structured alerts for automated morning checks. | Yes |
+| **Research & Disk Utilities (`deep_research.py`, `disk_librarian.py`, `inbox_organizer.py`)** | Iterative web research helper, SHA-256 exact duplicate file finder, and read-only folder categorizer for Downloads/Desktop cleanup plans. | Yes |
+| **Dual-Repo Sync & PII Sanitizer (`export_public_template.py`, `sync_repos.py`)** | Whitelist-exports generic framework files to a clean public folder, strips local paths, and runs a strict regex secret/PII scan before committing/pushing both private and public repos. | Yes |
+| **Local Voice Proxy (`services/juno_rostproxy.py`)** | Optional OpenAI-compatible local STT/TTS FastAPI service (`faster-whisper`, `edge-tts`, `kokoro`) for voice-driven workflows. | Yes (`-WithVoice`) |
 
 ---
 
-## 5. Two-Step Visual Post-Verification (`post-verify`)
+## 5. Safety & Approval Boundaries
 
-UI and web builds follow a strict verification loop before delivery:
-1. **Step 1 — Silent Technical X-Ray:** `browser` subagent / `chrome-devtools` checks 0 console errors, 0 failed network requests, interactive state, and desktop + mobile layouts.
-2. **Step 2 — Visible Live Demo:** `tools/chrome_agent.py demo <url> --keep-open --screenshot` launches Chrome visibly in the foreground, interacts with the app live, captures a screenshot, and leaves the window open for inspection.
-3. **Step 3 — Independent QA:** `qa-auditor` verifies requirements, rules, and test evidence (and closes any temporary test tabs).
+* **Autonomous (no prompt needed):** Reading/analyzing workspace files, editing local project code, running `memory_cli.py learn` / `stage`, and writing audit logs.
+* **Always requires explicit user confirmation:** Deleting files/folders outside temp caches, changing Windows settings/autostart, sending emails or modifying cloud files, approving (`approve`) staged memory changes, and pushing to public repositories.
 
 ---
 
