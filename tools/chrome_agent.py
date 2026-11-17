@@ -54,19 +54,25 @@ CURSOR_SCRIPT = """
 def _launch_context(playwright):
     """Launch a new visible Chrome window, falling back to an ephemeral window if profile is locked."""
     PROFILE_DIR.mkdir(parents=True, exist_ok=True)
+    stealth_args = [
+        "--start-maximized",
+        "--disable-blink-features=AutomationControlled",
+    ]
     try:
         ctx = playwright.chromium.launch_persistent_context(
             user_data_dir=str(PROFILE_DIR),
             channel="chrome",
             headless=False,
-            args=["--start-maximized"],
+            args=stealth_args,
+            ignore_default_args=["--enable-automation"],
             no_viewport=True,
         )
     except Exception:
         browser = playwright.chromium.launch(
             channel="chrome",
             headless=False,
-            args=["--start-maximized"],
+            args=stealth_args,
+            ignore_default_args=["--enable-automation"],
         )
         ctx = browser.new_context(no_viewport=True)
     ctx.add_init_script(CURSOR_SCRIPT)
@@ -95,17 +101,35 @@ def _extract_page_summary(page, max_chars: int = 2000) -> dict:
     return {"title": title, "url": page.url, "excerpt": clean_text, "links": links}
 
 
+def _sync_notebooklm_storage(ctx) -> None:
+    """Persist Playwright storage state to NotebookLM CLI profile when Google SID cookie is present."""
+    try:
+        state = ctx.storage_state()
+        cookies = state.get("cookies", [])
+        if any(c.get("name") == "SID" and "google" in c.get("domain", "") for c in cookies):
+            nb_storage = Path.home() / ".notebooklm" / "profiles" / "default" / "storage_state.json"
+            nb_storage.parent.mkdir(parents=True, exist_ok=True)
+            nb_storage.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+
+
 def _emit_and_maybe_keep_open(ctx, payload: dict, args: argparse.Namespace) -> None:
     """Write result to file/stdout and keep Chrome open until John closes it if requested."""
+    _sync_notebooklm_storage(ctx)
     if args.result_file:
         Path(args.result_file).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     else:
         print(json.dumps(payload, ensure_ascii=False, indent=2), flush=True)
 
     if args.keep_open:
+        ticks = 0
         try:
             while ctx.pages:
                 ctx.pages[0].wait_for_timeout(500)
+                ticks += 1
+                if ticks % 4 == 0:
+                    _sync_notebooklm_storage(ctx)
         except Exception:
             pass
 

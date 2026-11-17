@@ -1,6 +1,6 @@
 # juno_rostproxy.py — Röstproxy (Fas 3.6, JUNO_RÖST_SPEC §12 + ROSTPROXY_VAD_STT_KRAVLISTA)
 #
-# OpenAI-kompatibla endpoints som OW pekar på som STT/TTS-engine:
+# OpenAI-kompatibla endpoints för STT/TTS:
 #   POST /v1/audio/speech          → TTS: Edge TTS sv-SE (primär) → Kokoro en (fallback) → WebAPI (reserv)
 #   POST /v1/audio/transcriptions  → STT: faster-whisper + VAD + hallucination-filter (P9)
 #   GET  /health                   → status
@@ -107,39 +107,6 @@ def _spara_röstval(voice: str) -> None:
     except Exception as exc:
         _felrapport("spara_röstval", str(exc))
 
-
-def _ow_token() -> str:
-    """OW-admin-token (Regel 39): miljövariabel ELLER ow_admin_token.txt — aldrig i kod."""
-    p = Path(os.getenv("OW_ADMIN_TOKEN_PATH", r"<USER_HOME>\.juno\ow_admin_token.txt"))
-    try:
-        if p.exists():
-            return p.read_text(encoding="utf-8").strip()
-    except Exception:
-        pass
-    return os.getenv("OW_ADMIN_TOKEN", "")
-
-
-def _ow_uppdatera_röst(voice: str) -> bool:
-    """Uppdaterar OW config audio.tts.voice — samma värde OW skickar till proxyn vid varje TTS-anrop."""
-    tok = _ow_token()
-    if not tok:
-        _felrapport("ow_uppdatera_röst", "OW-admin-token saknas")
-        return False
-    try:
-        req = urllib.request.Request(
-            "http://127.0.0.1:8080/api/v1/audio/config",
-            headers={"Authorization": f"Bearer {tok}"})
-        cfg = json.load(urllib.request.urlopen(req, timeout=15))
-        cfg["tts"]["VOICE"] = voice
-        data = json.dumps({"tts": cfg["tts"], "stt": cfg["stt"]}, ensure_ascii=False).encode("utf-8")
-        req = urllib.request.Request(
-            "http://127.0.0.1:8080/api/v1/audio/config/update",
-            data=data, method="POST",
-            headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json"})
-        return urllib.request.urlopen(req, timeout=30).status == 200
-    except Exception as exc:
-        _felrapport("ow_uppdatera_röst", str(exc))
-        return False
 
 # ---------------------------------------------------------------- audit + felrapport (Regel 43)
 def _audit(event: str, note: str = "", ok: bool = True) -> None:
@@ -418,11 +385,10 @@ def create_app():
             return JSONResponse(
                 {"error": f"Okänd röst. Välj bland: {', '.join(v['id'] for v in VOICES)}"},
                 status_code=400)
-        ok_ow = _ow_uppdatera_röst(voice)
         _spara_röstval(voice)
-        _audit("röst_sätt", note=f"{voice} (ow={ok_ow})", ok=ok_ow)
-        _livefeed("INFO", f"Röst bytt till {voice} (OW-config {'uppdaterad' if ok_ow else 'EJ uppdaterad'})")
-        return {"voice": voice, "ow_uppdaterad": ok_ow, "gäller_nu": True}
+        _audit("röst_sätt", note=voice, ok=True)
+        _livefeed("INFO", f"Röst bytt till {voice}")
+        return {"voice": voice, "gäller_nu": True}
 
     @app.get("/measure/voice")
     async def measure_voice():

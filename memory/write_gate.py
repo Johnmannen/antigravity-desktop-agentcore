@@ -2,7 +2,7 @@
 #
 # Källa: MINNESARKIV_UTREDNING_2026-08-10 §12 (komponenter 10–13) + JUNO_MINNE_STRATEGI_V1
 # Regler (hybridspecen §12.5):
-#   R1 Git först, OW sen     — permanenta ändringar skrivs till JSON (git) innan OW-Memories synkas
+#   R1 Git först             — permanenta ändringar skrivs till JSON (git)
 #   R2 En skrivare           — inget skriver direkt till JSON utan staging-grinden
 #   R5 Allt audit-loggas     — varje arkiv-operation loggas till logs/juno_tools_audit.jsonl
 #
