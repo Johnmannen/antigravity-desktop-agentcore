@@ -383,17 +383,21 @@ SECTION_HANDLERS = {
 }
 
 
-def run_diagnose(section: str) -> dict[str, Any]:
-    """Run one or all read-only diagnostic sections."""
-    targets = list(DIAGNOSE_SECTIONS) if section == "all" else [section]
+def run_diagnose(section: str | list[str]) -> dict[str, Any]:
+    """Run one, multiple, or all read-only diagnostic sections."""
+    sections = [section] if isinstance(section, str) else list(section)
+    if "all" in sections:
+        targets = list(DIAGNOSE_SECTIONS)
+    else:
+        targets = list(dict.fromkeys(sections))
     report: dict[str, Any] = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "section": section,
+        "section": targets if len(targets) > 1 else targets[0],
         "data": {},
     }
     for name in targets:
         report["data"][name] = SECTION_HANDLERS[name]()
-    _audit("diagnose", {"section": section})
+    _audit("diagnose", {"section": report["section"]})
     return report
 
 
@@ -489,22 +493,27 @@ def classify_risk(action_text: str) -> dict[str, Any]:
                 "requires_user_ok": True,
             }
 
-    # Check YELLOW temp-cleanup before generic RED Remove-Item
+    # Evaluate RED patterns before YELLOW so compound commands (e.g. ms-settings + reg add) never downgrade
+    is_pure_temp_cleanup = bool(
+        re.search(r"(?i)\b(Remove-Item|del|rd)\b.*(%TEMP%|\\Temp\\|\$env:TEMP)", text)
+        and not re.search(r"[;&|]", text)
+    )
+    if not is_pure_temp_cleanup:
+        for pattern, reason in _RED_PATTERNS:
+            if re.search(pattern, text):
+                return {
+                    "risk": "RED",
+                    "reason": reason,
+                    "requires_backup": True,
+                    "requires_user_ok": True,
+                }
+
     for pattern, reason in _YELLOW_PATTERNS:
         if re.search(pattern, text):
             return {
                 "risk": "YELLOW",
                 "reason": reason,
                 "requires_backup": False,
-                "requires_user_ok": True,
-            }
-
-    for pattern, reason in _RED_PATTERNS:
-        if re.search(pattern, text):
-            return {
-                "risk": "RED",
-                "reason": reason,
-                "requires_backup": True,
                 "requires_user_ok": True,
             }
 
@@ -630,9 +639,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_diag = sub.add_parser("diagnose", help="Kör read-only Windows 10-diagnostik")
     p_diag.add_argument(
         "--section",
+        nargs="+",
         choices=("all", *DIAGNOSE_SECTIONS),
-        default="all",
-        help="Vilken diagnostiksektion som ska köras (default: all)",
+        default=["all"],
+        help="En eller flera diagnostiksektioner (default: all)",
     )
 
     p_risk = sub.add_parser("check-risk", help="Klassificera risknivå för en åtgärd/kommando")
