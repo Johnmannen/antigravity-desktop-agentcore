@@ -79,7 +79,7 @@ Supported `--stack` values: `python`, `web`, `mobile`, `general`.
 
 | Feature | What It Does & How It Works | Included in Repo |
 | :--- | :--- | :--- |
-| **Global Plugin (`plugins/juno-core/`)** | Bundles global persona/ergonomics rules, `post_edit_verify.py` hook, `post-verify` skill, and 8 specialist subagents (`juno-builder`, `qa-auditor`, `system-guardian`, `chrome-visual-agent`, `deep-research`, `desktop-operator`, `disk-librarian`, `google-assistant`). | Yes |
+| **Global Plugin (`plugins/juno-core/`)** | Bundles global persona/ergonomics rules, `post_edit_verify.py` hook, `post-verify` skill, and 9 specialist subagents (`juno-builder`, `qa-auditor`, `system-guardian`, `chrome-visual-agent`, `deep-research`, `desktop-operator`, `disk-librarian`, `google-assistant`, `win10-expert`). | Yes |
 | **3-Layer Memory Engine (`memory/` + `tools/memory_cli.py`)** | Stores preferences and learned facts in JSON with `write_gate.py` (secret filtering + prompt-injection guard), `lifecycle.py` (importance scoring + deduplication), `stage`/`approve` gating, and `learn`/`update`/`forget` with concise chat receipts. | Yes |
 | **Project Initializer (`tools/init_project.py`)** | Generates stack-specific local `AGENTS.md` (`python`, `web`, `mobile`, `general`) and `.gitignore` complements for new projects while keeping all Python tools centralized. | Yes |
 | **Visible Chrome Live-Demo (`tools/chrome_agent.py`)** | Launches visible Google Chrome (`headless=False`, `--start-maximized`, cyan cursor overlay) for `open`, `search`, and `demo` (clicks live UI flows, captures screenshots, and leaves Chrome open with `--keep-open`). | Yes |

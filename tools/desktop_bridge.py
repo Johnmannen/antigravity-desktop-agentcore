@@ -1,6 +1,6 @@
 """Local Interactive Desktop Bridge for C:\\juno-agy.
 
-Listens strictly on 127.0.0.1:8765 inside John's interactive Windows session
+Listens strictly on 127.0.0.1:18765 inside John's interactive Windows session
 so Antigravity tools (chrome_agent.py, desktop_operator.py) can open visible
 windows on the real desktop and interact with native Windows applications.
 """
@@ -23,6 +23,7 @@ PYTHON_EXE = ROOT / ".venv" / "Scripts" / "python.exe"
 ALLOWED_TOOLS = {
     "chrome_agent": TOOLS_DIR / "chrome_agent.py",
     "desktop_operator": TOOLS_DIR / "desktop_operator.py",
+    "screen_recorder": TOOLS_DIR / "screen_recorder.py",
 }
 
 

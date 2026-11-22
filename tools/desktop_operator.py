@@ -58,12 +58,60 @@ def cmd_launch(args: argparse.Namespace) -> dict:
 
 
 def cmd_type_into(args: argparse.Namespace) -> dict:
-    """Focus a matching window and type text into it."""
+    """Focus a matching window, optionally click (x,y), and send keys reliably (works on Electron/Antigravity)."""
+    from pywinauto import keyboard, mouse
+
     desktop = Desktop(backend="uia")
     win = desktop.window(title_re=args.title_re, found_index=0)
     win.set_focus()
-    win.type_keys(args.text, with_spaces=True, with_newlines=True)
+    time.sleep(0.25)
+    if getattr(args, "click_xy", ""):
+        cx, cy = [int(v) for v in args.click_xy.split(",")]
+        mouse.click(coords=(cx, cy))
+        time.sleep(0.25)
+    keyboard.send_keys(args.text, with_spaces=True, with_newlines=True, pause=0.015)
     return {"status": "ok", "window": win.window_text(), "typed_chars": len(args.text)}
+
+
+def cmd_choreograph(args: argparse.Namespace) -> dict:
+    """Execute a smooth sequence of real mouse moves, clicks, wheel scrolls, typing, and pauses."""
+    from pywinauto import keyboard, mouse
+
+    steps = json.loads(args.steps_json)
+    if args.title_re:
+        desktop = Desktop(backend="uia")
+        win = desktop.window(title_re=args.title_re, found_index=0)
+        win.set_focus()
+        time.sleep(0.25)
+
+    cur_x, cur_y = 960, 540
+    for step in steps:
+        action = step.get("action")
+        if action == "sleep":
+            time.sleep(float(step.get("sec", 0.5)))
+        elif action == "move":
+            tx, ty = int(step["x"]), int(step["y"])
+            n = max(8, int(step.get("steps", 18)))
+            dur = float(step.get("dur", 0.45))
+            for i in range(1, n + 1):
+                nx = int(cur_x + (tx - cur_x) * (i / n))
+                ny = int(cur_y + (ty - cur_y) * (i / n))
+                mouse.move(coords=(nx, ny))
+                time.sleep(dur / n)
+            cur_x, cur_y = tx, ty
+        elif action == "click":
+            tx, ty = int(step["x"]), int(step["y"])
+            mouse.click(coords=(tx, ty))
+            cur_x, cur_y = tx, ty
+        elif action == "scroll":
+            tx, ty = int(step.get("x", cur_x)), int(step.get("y", cur_y))
+            wheel = int(step.get("wheel", -4))
+            mouse.scroll(coords=(tx, ty), wheel_dist=wheel)
+        elif action == "type":
+            txt = str(step["text"])
+            pause = float(step.get("pause", 0.04))
+            keyboard.send_keys(txt, with_spaces=True, with_newlines=True, pause=pause)
+    return {"status": "ok", "steps_run": len(steps)}
 
 
 def cmd_inspect(args: argparse.Namespace) -> dict:
@@ -133,6 +181,7 @@ def main() -> None:
     p_type = sub.add_parser("type-into", help="Focus a window and type text")
     p_type.add_argument("title_re")
     p_type.add_argument("text")
+    p_type.add_argument("--click-xy", default="", help="Optional x,y screen coordinates to click before typing")
     p_type.add_argument("--local", action="store_true")
 
     p_insp = sub.add_parser("inspect", help="List interactive controls inside a window")
@@ -145,6 +194,11 @@ def main() -> None:
     p_clk.add_argument("control_re")
     p_clk.add_argument("--local", action="store_true")
 
+    p_cho = sub.add_parser("choreograph", help="Run smooth live mouse/keyboard sequence")
+    p_cho.add_argument("title_re")
+    p_cho.add_argument("steps_json")
+    p_cho.add_argument("--local", action="store_true")
+
     args = parser.parse_args()
     if not args.local and bridge_client.is_bridge_running():
         forward = [args.cmd]
@@ -154,10 +208,14 @@ def main() -> None:
             forward.extend([args.command, "--wait", str(args.wait)])
         elif args.cmd == "type-into":
             forward.extend([args.title_re, args.text])
+            if args.click_xy:
+                forward.extend(["--click-xy", args.click_xy])
         elif args.cmd == "inspect":
             forward.extend([args.title_re, "--limit", str(args.limit)])
         elif args.cmd == "click":
             forward.extend([args.title_re, args.control_re])
+        elif args.cmd == "choreograph":
+            forward.extend([args.title_re, args.steps_json])
         print(json.dumps(bridge_client.run_via_bridge("desktop_operator", forward), ensure_ascii=False, indent=2))
         return
 
@@ -168,6 +226,7 @@ def main() -> None:
         "type-into": cmd_type_into,
         "inspect": cmd_inspect,
         "click": cmd_click,
+        "choreograph": cmd_choreograph,
     }[args.cmd](args)
     print(json.dumps(res, ensure_ascii=False, indent=2))
 

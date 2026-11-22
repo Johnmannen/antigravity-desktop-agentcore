@@ -1,6 +1,6 @@
 """Resilient multi-provider LLM fallback router for C:\\juno-agy.
 
-Tries providers in priority order (Gemini -> Groq -> Mistral -> Nvidia -> OpenRouter)
+Tries providers in priority order (Google AI Studio -> Groq -> OpenRouter -> Nvidia -> Local)
 and automatically falls back on rate limits (429), server errors (5xx), or timeouts.
 """
 
