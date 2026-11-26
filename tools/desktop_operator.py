@@ -48,7 +48,7 @@ def cmd_focus(args: argparse.Namespace) -> dict:
 
 def cmd_launch(args: argparse.Namespace) -> dict:
     """Launch a Windows application or .lnk shortcut and return status/PID."""
-    if args.command.lower().endswith(".lnk") or Path(args.command).suffix.lower() in (".url",):
+    if args.command.lower().endswith(".lnk") or Path(args.command).suffix.lower() in (".url", ".bat", ".cmd"):
         os.startfile(args.command)
         time.sleep(args.wait)
         return {"status": "ok", "command": args.command, "pid": None}
@@ -89,10 +89,15 @@ def cmd_choreograph(args: argparse.Namespace) -> dict:
         action = step.get("action")
         if action == "sleep":
             time.sleep(float(step.get("sec", 0.5)))
+        elif action == "jump":
+            # Fast cursor placement near target (skips slow empty-space travel per PRODUCTION_FRAMEWORK)
+            tx, ty = int(step["x"]), int(step["y"])
+            mouse.move(coords=(tx, ty))
+            cur_x, cur_y = tx, ty
         elif action == "move":
             tx, ty = int(step["x"]), int(step["y"])
-            n = max(8, int(step.get("steps", 18)))
-            dur = float(step.get("dur", 0.45))
+            n = max(4, int(step.get("steps", 6)))
+            dur = float(step.get("dur", 0.25))
             for i in range(1, n + 1):
                 nx = int(cur_x + (tx - cur_x) * (i / n))
                 ny = int(cur_y + (ty - cur_y) * (i / n))
@@ -107,6 +112,11 @@ def cmd_choreograph(args: argparse.Namespace) -> dict:
             tx, ty = int(step.get("x", cur_x)), int(step.get("y", cur_y))
             wheel = int(step.get("wheel", -4))
             mouse.scroll(coords=(tx, ty), wheel_dist=wheel)
+        elif action == "move_window":
+            import ctypes
+            target_re = step.get("title_re", args.title_re)
+            w_obj = Desktop(backend="uia").window(title_re=target_re, found_index=0)
+            ctypes.windll.user32.MoveWindow(w_obj.handle, int(step["x"]), int(step["y"]), int(step["w"]), int(step["h"]), True)
         elif action == "type":
             txt = str(step["text"])
             pause = float(step.get("pause", 0.04))
